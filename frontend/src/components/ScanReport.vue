@@ -18,7 +18,7 @@
       <div v-if="!showFullReport">
         <v-card-text>
           <p class="mb-4 text-h6">
-            <strong>Verdict:</strong> 
+            <strong>Verdict:</strong>
             <span :class="isMalicious ? 'red--text' : 'green--text'">
               {{ isMalicious ? 'Malicious' : 'Safe' }}
             </span>
@@ -99,19 +99,10 @@
 
     <!-- Toggle and Download buttons -->
     <v-card-actions class="justify-center">
-      <v-btn
-        color="primary"
-        text
-        @click="showFullReport = !showFullReport"
-      >
+      <v-btn color="primary" text @click="showFullReport = !showFullReport">
         {{ showFullReport ? 'View Summary' : 'View Full Report' }}
       </v-btn>
-      <v-btn
-        color="info"
-        text
-        class="ml-2"
-        @click="downloadReport"
-      >
+      <v-btn color="info" text class="ml-2" @click="downloadReport">
         <v-icon left>mdi-download</v-icon>
         Download Report (PDF)
       </v-btn>
@@ -120,11 +111,11 @@
 </template>
 
 <script>
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 export default {
-  name: 'ScanReport',
+  name: "ScanReport",
   props: {
     report: {
       type: Object,
@@ -146,27 +137,34 @@ export default {
     },
     maliciousCount() {
       if (!this.report || !this.report.scans) return 0;
-      return Object.values(this.report.scans).filter(s => s.category === 'malicious').length;
+      return Object.values(this.report.scans).filter(
+        (s) => s.category === "malicious"
+      ).length;
     },
     suspiciousCount() {
       if (!this.report || !this.report.scans) return 0;
-      return Object.values(this.report.scans).filter(s => s.category === 'suspicious').length;
+      return Object.values(this.report.scans).filter(
+        (s) => s.category === "suspicious"
+      ).length;
     },
     cleanCount() {
       if (!this.report || !this.report.scans) return 0;
-      return Object.values(this.report.scans).filter(s =>
-        s.category === 'harmless' || s.category === 'clean'
+      return Object.values(this.report.scans).filter(
+        (s) => s.category === "harmless" || s.category === "clean"
       ).length;
     },
     undetectedCount() {
       if (!this.report || !this.report.scans) return 0;
-      return Object.values(this.report.scans).filter(s => s.category === 'undetected').length;
+      return Object.values(this.report.scans).filter(
+        (s) => s.category === "undetected"
+      ).length;
     },
     detectionPercentage() {
-      if (!this.report || !this.report.scans || this.totalEngines === 0) return 0;
+      if (!this.report || !this.report.scans || this.totalEngines === 0)
+        return 0;
       return ((this.maliciousCount / this.totalEngines) * 100).toFixed(1);
     },
-    // Sorted scan results with malicious/suspicious first
+    //  Updated sorting logic
     sortedScanResults() {
       if (!this.report || !this.report.scans) return [];
       const arr = Object.entries(this.report.scans).map(([engine, result]) => ({
@@ -175,21 +173,32 @@ export default {
       }));
 
       const priority = (scan) => {
-        if (!scan.result) return 100;
+        if (!scan.result) return 50; // treat empty result as clean
         const r = scan.result.toLowerCase();
+
+        // 1️⃣ Malicious / Virus / Trojan / Phishing first
         if (
-          r.includes('malicious') ||
-          r.includes('trojan') ||
-          r.includes('virus') ||
-          r.includes('worm') ||
-          r.includes('backdoor') ||
-          r.includes('agent')
-        ) return 1;
-        if (r.includes('phishing')) return 2;
-        if (r.includes('suspicious')) return 3;
-        if (r.includes('unrated')) return 99;
-        if (r.includes('clean')) return 50;
-        return 100;
+          r.includes("malicious") ||
+          r.includes("trojan") ||
+          r.includes("virus") ||
+          r.includes("worm") ||
+          r.includes("backdoor") ||
+          r.includes("agent") ||
+          r.includes("phishing") ||
+          r.includes("malware")
+        )
+          return 1;
+
+        // 2️⃣ Suspicious after malicious
+        if (r.includes("suspicious")) return 2;
+
+        // 3️⃣ Clean results in the middle
+        if (r.includes("clean") || r.includes("harmless")) return 3;
+
+        //  Undetected at the bottom
+        if (r.includes("undetected")) return 4;
+
+        return 99; // unknowns last
       };
 
       return arr.sort((a, b) => priority(a) - priority(b));
@@ -198,68 +207,68 @@ export default {
   methods: {
     getResultColor(result) {
       if (!result) {
-        return 'green--text'; // clean
+        return "green--text"; // clean
       }
       const lowerResult = result.toLowerCase();
       if (
-        lowerResult.includes('trojan') ||
-        lowerResult.includes('virus') ||
-        lowerResult.includes('worm') ||
-        lowerResult.includes('malware') ||
-        lowerResult.includes('backdoor') ||
-        lowerResult.includes('agent')
+        lowerResult.includes("trojan") ||
+        lowerResult.includes("virus") ||
+        lowerResult.includes("worm") ||
+        lowerResult.includes("malware") ||
+        lowerResult.includes("backdoor") ||
+        lowerResult.includes("agent")
       ) {
-        return 'red--text'; // malicious detection
-      } else if (lowerResult.includes('phishing')) {
-        return 'red--text'; // phishing also red
-      } else if (lowerResult.includes('suspicious')) {
-        return 'orange--text';
-      } else if (lowerResult.includes('clean')) {
-        return 'green--text';
-      } else if (lowerResult.includes('undetected')) {
-        return 'grey--text';
+        return "red--text"; // malicious detection
+      } else if (lowerResult.includes("phishing")) {
+        return "red--text"; // phishing also red
+      } else if (lowerResult.includes("suspicious")) {
+        return "orange--text";
+      } else if (lowerResult.includes("clean") || lowerResult.includes("harmless")) {
+        return "green--text";
+      } else if (lowerResult.includes("undetected")) {
+        return "grey--text";
       }
-      return 'grey--text';
+      return "grey--text";
     },
     async downloadReport() {
-      const reportElement = document.getElementById('report-content');
+      const reportElement = document.getElementById("report-content");
 
       if (!reportElement) {
-        console.error('Report element not found!');
+        console.error("Report element not found!");
         return;
       }
 
       const canvas = await html2canvas(reportElement, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#1E1E1E'
+        backgroundColor: "#1E1E1E",
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL("image/png");
       const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: 'a4'
+        orientation: "portrait",
+        unit: "px",
+        format: "a4",
       });
 
       const imgWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const imgHeight = canvas.height * imgWidth / canvas.width;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
 
-      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      doc.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         doc.addPage();
-        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        doc.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
-      doc.save('scan-report.pdf');
-    }
-  }
+      doc.save("scan-report.pdf");
+    },
+  },
 };
 </script>
