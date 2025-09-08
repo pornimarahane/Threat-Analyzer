@@ -1,68 +1,171 @@
 <template>
 <v-card color="#121212" class="pa-4" style="height: 93vh; display: flex; flex-direction: column;">
-  <!-- White navigation bar at the top -->
-  <v-toolbar color="" elevation="1" class="mb-2">
-    <v-toolbar-title class="black--text" style="font-weight: bold;">
-      <v-icon left class="black--text">mdi-console</v-icon>
-      Innovate Dynamics - Incident Response Terminal
-    </v-toolbar-title>
-    <v-spacer></v-spacer>
-    <v-chip :color="systemStatus.color" small class="black--text">{{ systemStatus.text }}</v-chip>
-    <v-btn icon @click="$emit('exit')">
-      <v-icon class="black--text">mdi-close</v-icon>
-    </v-btn>
-  </v-toolbar>
+    <div style="height: 20px;">
+    <v-toolbar color="" elevation="1" class="mb-2" >
+      <v-toolbar-title class="black--text" style="font-weight: bold;">
+        <v-icon left class="black--text">mdi-console</v-icon>
+        Innovate Dynamics - Incident Response Terminal
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-chip :color="systemStatus.color" small class="black--text">{{ systemStatus.text }}</v-chip>
+      <v-btn icon @click="$emit('exit')">
+        <v-icon class="black--text">mdi-close</v-icon>
+      </v-btn>
+    </v-toolbar>
 
-  <!-- Terminal / Story log area -->    
-  <v-sheet class="pa-4 white--text" elevation="2" style="flex-grow: 1; overflow-y: auto; background-color: #1E1E1E;">
-    <div v-for="(entry, index) in storyLog" :key="index" class="mb-4 text-body-1 white--text">
-      <span class="white--text mr-3">[{{ entry.time }}]</span>
-      <span class="white--text font-weight-bold mr-2">{{ entry.source }}:</span>
-      <span v-html="entry.text"></span>
     </div>
 
-    
-  </v-sheet>
+    <!-- Terminal/Scenario Area -->
+    <v-sheet
+      class="pa-4 white--text"
+      elevation="2"
+      style="
+        flex-grow: 1;
+        overflow-y: auto;
+        background-color: #1E1E1E;
+      "
+    >
+      <div
+        v-for="(entry, index) in storyLog"
+        :key="index"
+        class="mb-4 text-body-1 white--text"
+      >
+        <span class="white--text mr-3">[{{ entry.time }}]</span>
+        <span class="white--text font-weight-bold mr-2">{{ entry.source }}:</span>
+        <span v-html="entry.text"></span>
+      </div>
+    </v-sheet>
 
-  <!-- Choices buttons -->
-  <v-card-actions class="pa-4" v-if="currentChoices.length > 0">
-    <v-row>
-      <v-col cols="12">
-        <p class="font-weight-bold text-center mb-4 white--text">{{ currentPrompt }}</p>
-      </v-col>
-
-      <template v-if="!isSimulationEnd">
-        <v-col v-for="choice in currentChoices" :key="choice.id" cols="12" class="mb-2">
-          <v-btn block large color="white" class="black--text" @click="makeChoice(choice.nextEventId)">
-            <v-icon left class="black--text">{{ choice.icon }}</v-icon>
-            {{ choice.text }}
-          </v-btn>
+    <!-- Choices / Buttons Area -->
+    <v-card-actions class="pa-2" v-if="currentChoices.length > 0">
+      <v-row>
+        <v-col cols="12">
+          <p class="font-weight-bold text-center mb-2 white--text">{{ currentPrompt }}</p>
         </v-col>
-      </template>
 
-      <v-col v-else cols="12" class="text-center">
-        <v-btn class="ma-2" large color="primary" @click="makeChoice(currentChoices[0].nextEventId)">
-          <v-icon left>{{ currentChoices[0].icon }}</v-icon>
-          {{ currentChoices[0].text }}
-        </v-btn>
-        <v-btn class="ma-2" large color="deep-purple accent-4" @click="getAIDebrief" :loading="loadingAIDebrief">
-          <v-icon left>mdi-auto-fix</v-icon>
-          Generate AI-Powered Debrief ✨
-        </v-btn>
-        <v-expand-transition>
-          <div v-if="aiDebrief" class="mt-4">
-            <v-alert border="left" colored-border color="deep-purple accent-4" elevation="2">
-              <h4 class="mb-2">AI Performance Review</h4>
-              {{ aiDebrief }}
-            </v-alert>
-          </div>
-        </v-expand-transition>
-      </v-col>
-    </v-row>
-  </v-card-actions>
-</v-card>
+        <!-- Normal simulation choices -->
+        <template v-if="!isSimulationEnd">
+          <v-col
+            v-for="choice in currentChoices"
+            :key="choice.id"
+            cols="12"
+            class="mb-1"
+          >
+            <v-btn
+              small
+              block
+              color="white"
+              class="black--text"
+              @click="makeChoice(choice.nextEventId)"
+            >
+              <v-icon left small class="black--text">{{ choice.icon }}</v-icon>
+              {{ choice.text }}
+            </v-btn>
+          </v-col>
+        </template>
 
+        <!-- End of simulation buttons -->
+        <v-col v-else cols="12" class="text-center">
+          <v-btn
+            class="ma-1"
+            small
+            color="primary"
+            @click="makeChoice(currentChoices[0].nextEventId)"
+          >
+            <v-icon left small>{{ currentChoices[0].icon }}</v-icon>
+            {{ currentChoices[0].text }}
+          </v-btn>
+          <v-btn
+            class="ma-1"
+            small
+            color="deep-purple accent-4"
+            @click="getAIDebrief"
+            :loading="loadingAIDebrief"
+          >
+            <v-icon left small>mdi-auto-fix</v-icon>
+            Generate AI-Powered Debrief ✨
+          </v-btn>
+
+          <v-expand-transition>
+            <div v-if="aiDebrief" class="mt-2 text-left">
+              <v-alert
+                border="left"
+                colored-border
+                color="deep-purple accent-4"
+                elevation="2"
+                text
+                class="pa-4"
+              >
+                <v-row align="center">
+                  <v-col cols="12" md="3" class="text-center">
+                    <v-progress-circular
+                      :rotate="-90"
+                      :size="80"
+                      :width="12"
+                      :value="aiDebrief.score"
+                      :color="
+                        aiDebrief.score >= 80
+                          ? 'green'
+                          : aiDebrief.score >= 50
+                          ? 'orange'
+                          : 'red'
+                      "
+                      class="white--text"
+                    >
+                      <strong style="font-size: 1rem;"
+                        >{{ aiDebrief.score }}%</strong
+                      >
+                    </v-progress-circular>
+                  </v-col>
+                  <v-col cols="12" md="9">
+                    <h4 class="mb-2 white--text" style="font-size: 1.1rem;">
+                      {{ aiDebrief.headline }}
+                    </h4>
+                    <v-chip color="green" outlined small class="mr-1 mb-1">
+                      <v-icon left small>mdi-check-circle</v-icon>
+                      {{ aiDebrief.counts.good }} Correct
+                    </v-chip>
+                    <v-chip color="orange" outlined small class="mr-1 mb-1">
+                      <v-icon left small>mdi-alert-outline</v-icon>
+                      {{ aiDebrief.counts.risky }} Risky
+                    </v-chip>
+                    <v-chip color="red" outlined small class="mb-1">
+                      <v-icon left small>mdi-close-circle</v-icon>
+                      {{ aiDebrief.counts.bad }} Critical
+                    </v-chip>
+                  </v-col>
+                </v-row>
+
+                <v-divider
+                  class="my-3"
+                  style="border-color: rgba(255, 255, 255, 0.2);"
+                ></v-divider>
+
+                <div
+                  v-for="(point, i) in aiDebrief.feedbackPoints"
+                  :key="i"
+                  class="d-flex align-start mb-2"
+                >
+                  <v-icon
+                    :color="getDebriefColor(point.type)"
+                    class="mr-2 mt-1"
+                    small
+                  >
+                    {{ getDebriefIcon(point.type) }}
+                  </v-icon>
+                  <div class="white--text" style="line-height: 1.4;">
+                    {{ point.text }}
+                  </div>
+                </div>
+              </v-alert>
+            </div>
+          </v-expand-transition>
+        </v-col>
+      </v-row>
+    </v-card-actions>
+  </v-card>
 </template>
+
 
 <script>
 export default {
@@ -73,7 +176,7 @@ export default {
       required: true,
     },
   },
-    data() {
+  data() {
     return {
       storyLog: [],
       currentEventId: 'start',
@@ -82,8 +185,9 @@ export default {
       systemStatus: { text: 'Nominal', color: 'green' },
       isSimulationEnd: false,
       loadingAIDebrief: false,
-      aiDebrief: null,
+      aiDebrief: null, // This will now store an OBJECT, not a string
       narrativeTree: {},
+      userDecisions: [],
       phishingNarrativeTree: {
         'phishing_1': {
           log: [
@@ -1320,7 +1424,6 @@ export default {
       }
     };
   },
-  
   mounted() {
     this.loadScenario(this.scenarioType);
   },
@@ -1331,7 +1434,7 @@ export default {
   },
   methods: {
     getSourceClass(source) {
-      switch(source.toLowerCase()) {
+      switch (source.toLowerCase()) {
         case 'system': return 'blue--text';
         case 'user': return 'yellow--text';
         case 'alert': return 'red--text text--darken-2 font-weight-bold';
@@ -1343,6 +1446,7 @@ export default {
       this.systemStatus = { text: 'Nominal', color: 'green' };
       this.aiDebrief = null;
       this.isSimulationEnd = false;
+      this.userDecisions = []; 
 
       // Select the correct narrative tree
       if (type === 'phishing') {
@@ -1376,15 +1480,43 @@ export default {
       this.scrollToEnd();
     },
     makeChoice(nextEventId) {
-      this.currentChoices = [];
       if (nextEventId === 'start') {
         this.storyLog = [];
         this.systemStatus = { text: 'Nominal', color: 'green' };
         this.aiDebrief = null;
         this.scenarioChosen = false;
-        this.$emit('exit');
+        this.$emit('exit'); 
         return;
       }
+
+      const currentEvent = this.narrativeTree[this.currentEventId];
+      const chosenChoice = currentEvent.choices.find(c => c.nextEventId === nextEventId);
+      const resultingEvent = this.narrativeTree[nextEventId];
+
+      if (chosenChoice && resultingEvent && resultingEvent.systemStatus) {
+        let quality = 'unknown';
+        switch (resultingEvent.systemStatus.text) {
+          case 'Secure':
+            quality = 'good';
+            break;
+          case 'Compromised':
+            quality = 'risky';
+            break;
+          case 'Critical':
+            quality = 'bad';
+            break;
+        }
+
+        this.userDecisions.push({
+          scenarioId: this.currentEventId,
+          choiceId: chosenChoice.id,
+          choiceText: chosenChoice.text,
+          nextEventId: nextEventId,
+          quality: quality
+        });
+      }
+
+      this.currentChoices = [];
       setTimeout(() => {
         this.currentEventId = nextEventId;
         this.loadEvent(this.currentEventId);
@@ -1392,17 +1524,88 @@ export default {
     },
     async getAIDebrief() {
       this.loadingAIDebrief = true;
-      this.aiDebrief = null;
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      if (this.systemStatus.text === 'Secure') {
-        this.aiDebrief = "You performed well! Your investigation stopped the threat before escalation.";
-      } else if (this.systemStatus.text === 'Compromised') {
-        this.aiDebrief = "You were honest in your reporting, which helped contain damage, but earlier checks would help.";
+      this.aiDebrief = null; // Clear previous debrief
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate AI thinking
+
+      // --- START: MODIFIED DEBRIEF LOGIC (Generates an Object) ---
+      const total = this.userDecisions.length;
+      const good = this.userDecisions.filter(d => d.quality === 'good').length;
+      const risky = this.userDecisions.filter(d => d.quality === 'risky').length;
+      const bad = this.userDecisions.filter(d => d.quality === 'bad').length;
+
+      let score = (total > 0) ? Math.round((good / total) * 100) : 0;
+      let headline = '';
+      let feedbackPoints = [];
+      let improvementTopic = this.scenarioType.charAt(0).toUpperCase() + this.scenarioType.slice(1);
+
+      if (total > 0 && good === total) {
+        headline = 'Outstanding Performance!';
+        feedbackPoints.push({
+          type: 'good',
+          text: `You correctly navigated all ${total} scenarios. Your understanding of ${improvementTopic} protocols is excellent.`
+        });
       } else {
-        this.aiDebrief = "Critical failure — always escalate and share full info immediately.";
+        // Assign headline based on score
+        if (score >= 80) {
+          headline = 'Strong Performance with Room for Review';
+        } else if (score >= 50) {
+          headline = 'Good Effort, but Key Areas Need Improvement';
+        } else {
+          headline = 'Critical Review Required';
+        }
+
+        // Add general feedback
+        feedbackPoints.push({
+            type: 'summary',
+            text: `This simulation highlights a need for review in our ${improvementTopic} response protocols.`
+        });
+
+        // Add specific feedback for mistakes
+        if (bad > 0) {
+          feedbackPoints.push({
+            type: 'bad',
+            text: `Your critical mistakes often stemmed from acting without verification (like clicking a link or processing a payment) or failing to contain an active threat immediately. Always prioritize verification through a separate, trusted channel and immediate containment.`
+          });
+        }
+        if (risky > 0) {
+          feedbackPoints.push({
+            type: 'risky',
+            text: `Your risky choices (such as deleting an email without reporting it) protect you individually but leave the entire organization vulnerable. Always report threats to the security team so they are aware of the active threat.`
+          });
+        }
       }
+
+      // Set the debrief as an object
+      this.aiDebrief = {
+        score: score,
+        headline: headline,
+        counts: { good, risky, bad, total },
+        feedbackPoints: feedbackPoints
+      };
+      // --- END: MODIFIED DEBRIEF LOGIC ---
+      
       this.loadingAIDebrief = false;
     },
+    // --- START: NEW HELPER METHODS ---
+    getDebriefIcon(type) {
+        const icons = {
+            good: 'mdi-check-circle',
+            risky: 'mdi-alert-outline',
+            bad: 'mdi-close-circle',
+            summary: 'mdi-information-outline'
+        };
+        return icons[type] || 'mdi-help-circle';
+    },
+    getDebriefColor(type) {
+        const colors = {
+            good: 'green',
+            risky: 'orange',
+            bad: 'red',
+            summary: 'rgba(255, 255, 255, 0.7)' // A more subtle color for general text
+        };
+        return colors[type] || 'white';
+    },
+    // --- END: NEW HELPER METHODS ---
     scrollToEnd() {
       this.$nextTick(() => {
         const container = this.$el.querySelector('.v-sheet');
