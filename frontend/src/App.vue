@@ -17,10 +17,10 @@
         {{ isDarkMode ? 'Light' : 'Dark' }}
       </v-btn>
 
-      <!-- Simulator button -->
-      <v-btn text @click="openSimulator">
+      <!-- Simulator/Home button -->
+      <v-btn text @click="handleSimulatorClick">
         <v-icon left>mdi-training</v-icon>
-        Simulator
+        {{ isSimulatorOpen ? 'Home' : 'Simulator' }}
       </v-btn>
 
       <!-- Conditional rendering: Show Sign In/Sign Up when not logged in -->
@@ -60,16 +60,6 @@
     <v-main>
       <router-view></router-view>
     </v-main>
-
-    <!-- The Incident Response Simulator is a full-screen dialog -->
-    <v-dialog
-      v-model="showSimulator"
-      fullscreen
-      hide-overlay
-      transition="dialog-bottom-transition"
-    >
-      <Simulator @close="showSimulator = false" />
-    </v-dialog>
 
     <!-- Sign-up Dialog -->
     <v-dialog
@@ -119,6 +109,11 @@ export default {
       isLoggedIn: false, // Track user login state
     }
   },
+  computed: {
+    isSimulatorOpen() {
+      return this.showSimulator || this.$route.name === 'Simulator';
+    }
+  },
   methods: {
     toggleDarkMode() {
       this.isDarkMode = !this.isDarkMode
@@ -132,25 +127,44 @@ export default {
     logout() {
       this.isLoggedIn = false
       localStorage.removeItem('token')
-      this.$router.push('/') // Redirect after logout
+      if (this.$route.path !== '/') {
+        this.$router.push('/')
+      }
     },
+    handleSimulatorClick() {
+      if (!this.isLoggedIn) {
+        // Not logged in -> show login dialog
+        this.showLogin = true;
+      } else {
+        // Toggle between Simulator and Home without causing navigation error
+        if (this.$route.name === 'Simulator') {
+          // Already on Simulator -> go to Home
+          if (this.$route.name !== 'Home') {
+            this.$router.push({ name: 'Home' }).catch(() => { });
+          }
+        } else {
+          // Not on Simulator -> go to Simulator
+          this.$router.push({ name: 'Simulator' }).catch(() => { });
+        }
+      }
+    },
+
+
     openSimulator() {
+      // (You can remove or keep this if used elsewhere)
       if (this.isLoggedIn) {
         this.showSimulator = true
       } else {
         this.showLogin = true
       }
     },
-  },
-  mounted() {
-    // Check if token exists
-    if (localStorage.getItem('token')) {
-      this.isLoggedIn = true
-    }
-  },
-}
-</script>
 
-<style>
-/* No scoped styles, Vuetify handles design */
-</style>
+    mounted() {
+      // Check if token exists
+      if (localStorage.getItem('token')) {
+        this.isLoggedIn = true
+      }
+    },
+  }
+};
+ </script>
