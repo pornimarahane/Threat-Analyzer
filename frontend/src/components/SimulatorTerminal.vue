@@ -85,12 +85,12 @@
             <v-btn
             class="ma-1"
             small
-            color="deep-purple accent-4"
+            color="white"
             @click="getAIDebrief"
             :loading="loadingAIDebrief"
             >
             <v-icon left small>mdi-auto-fix</v-icon>
-            Generate AI-Powered Debrief ✨
+            Generate AI-Powered Debrief 
             </v-btn>
 
             <v-expand-transition>
