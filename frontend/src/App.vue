@@ -85,6 +85,35 @@
         @login-success="onLoginSuccess"
       />
     </v-dialog>
+
+<v-dialog v-model="showConfirmDialog" max-width="400" persistent>
+  <v-card class="text-center pa-4"> <v-card-text class="text-h5"> Are you sure you want to Go to HomePage ?
+    </v-card-text>
+
+    <v-card-actions class="justify-center pt-0"> <v-btn
+      color="red" 
+        @click="confirmNavigation(false)"
+        variant="elevated"
+        class="mx-2"
+        min-width="120"
+        size="large"
+      >
+        Cancel
+      </v-btn>
+
+      <v-btn
+        color="green" variant="elevated"
+        @click="confirmNavigation(true)"
+        class="mx-2"
+        min-width="120"
+        size="large"
+      >
+        CONFIRM
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
   </v-app>
 </template>
 
@@ -106,9 +135,13 @@ export default {
       showSignup: false,
       showLogin: false,
       isDarkMode: true,
-      isLoggedIn: false, // Track user login state
+      isLoggedIn: false,
+      // Add below two lines here
+      showConfirmDialog: false,
+      pendingNavigation: null,
     }
   },
+
   computed: {
     isSimulatorOpen() {
       return this.showSimulator || this.$route.name === 'Simulator';
@@ -131,40 +164,50 @@ export default {
         this.$router.push('/')
       }
     },
+
     handleSimulatorClick() {
       if (!this.isLoggedIn) {
-        // Not logged in -> show login dialog
         this.showLogin = true;
       } else {
-        // Toggle between Simulator and Home without causing navigation error
         if (this.$route.name === 'Simulator') {
-          // Already on Simulator -> go to Home
-          if (this.$route.name !== 'Home') {
-            this.$router.push({ name: 'Home' }).catch(() => { });
-          }
+          this.showConfirmDialog = true;
+          this.pendingNavigation = { name: 'Home' };
         } else {
-          // Not on Simulator -> go to Simulator
           this.$router.push({ name: 'Simulator' }).catch(() => { });
         }
       }
     },
 
+    handleExitTerminalClick() {
+  const confirmed = window.confirm('Do you want to exit the Incident Response Terminal?');
+  if (confirmed) {
+    this.$router.push({ name: 'Home' });
+  }
+},
+
+
+    confirmNavigation(agree) {
+      this.showConfirmDialog = false;
+      if (agree && this.pendingNavigation) {
+        this.$router.push(this.pendingNavigation).catch(() => { });
+      }
+      this.pendingNavigation = null;
+    },
 
     openSimulator() {
-      // (You can remove or keep this if used elsewhere)
       if (this.isLoggedIn) {
         this.showSimulator = true
       } else {
         this.showLogin = true
       }
     },
-
-    mounted() {
-      // Check if token exists
-      if (localStorage.getItem('token')) {
-        this.isLoggedIn = true
-      }
-    },
-  }
+    
+  },
+  mounted() {
+    // Check if token exists
+    if (localStorage.getItem('token')) {
+      this.isLoggedIn = true
+    }
+  },
 };
  </script>

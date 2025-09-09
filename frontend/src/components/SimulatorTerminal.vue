@@ -8,7 +8,7 @@
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-chip :color="systemStatus.color" small class="black--text">{{ systemStatus.text }}</v-chip>
-        <v-btn icon @click="$emit('exit')">
+        <v-btn icon @click="handleExitClick">
         <v-icon class="black--text">mdi-close</v-icon>
         </v-btn>
     </v-toolbar>
@@ -1447,7 +1447,14 @@ export default {
         case 'alert': return 'red--text text--darken-2 font-weight-bold';
         default: return '';
         }
-    },
+        },
+    handleExitClick() {
+         const confirmExit = window.confirm('Do you want to exit Incident Response Terminal?');
+         if (confirmExit) {
+         this.$emit('exit');
+       }
+      },
+    
     loadScenario(type) {
         this.storyLog = [];
         this.systemStatus = { text: 'Nominal', color: 'green' };

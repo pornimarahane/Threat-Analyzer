@@ -1,11 +1,11 @@
 <template>
-  <v-card color="#121212" class="pa-4">
+  <v-card color="#9E9E9E" class="pa-4">
 
     <v-container class="pa-6 text-center">
       <h3 class="white--text mb-6">Choose a Simulation Scenario</h3>
       <v-row justify="center" align="center" dense>
         <v-col cols="12" md="6" lg="3">
-          <v-btn block large color="grey lighten-1" @click="$emit('scenario-selected', 'phishing')">
+          <v-btn block large color="white" @click="$emit('scenario-selected', 'phishing')">
             <v-icon left>mdi-email-alert</v-icon> Phishing
           </v-btn>
         </v-col>
