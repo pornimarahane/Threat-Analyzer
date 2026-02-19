@@ -7,19 +7,29 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
+
 // Middleware
 app.use(cors());  // frontend se cross-origin requests ke liye
 app.use(bodyParser.json());  // JSON body parsing ke liye
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // MongoDB connection
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/threat-analyzer';
+const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => {
+    console.log('MongoDB connected');
+    console.log("Connected DB:", mongoose.connection.name);
+
+    // Optional: list collections
+    mongoose.connection.db.listCollections().toArray((err, names) => {
+      if (err) throw err;
+      console.log("Collections:", names.map(c => c.name));
+    });
+  })
+  .catch(err => console.error('MongoDB connection error:', err));
 
 
 
